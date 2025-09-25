@@ -1,0 +1,2 @@
+# wsc
+Whitespace compiler
