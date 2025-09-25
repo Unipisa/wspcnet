@@ -3,45 +3,43 @@ using System.IO;
 using Whitespace.net;
 
 namespace dews {
-	class DeWSMain {
-		public static int ParseNumber(string s) {
-			bool pos = s[0] == ' ';
-			int num = 0;
-			if (s.Length == 32)
-				throw new Exception("Whitespace.NET: Overflow (>31 bits used)!");
+        class DeWSMain {
+                public static int ParseNumber(string literal) {
+                        var positive = literal[0] == ' ';
+                        var number = 0;
+                        if (literal.Length == 32)
+                                throw new InvalidOperationException("Whitespace.NET: Overflow (>31 bits used)!");
 
-			for (int i = 1; i < s.Length; i++)
-				if (s[i] == ' ')
-					num = num << 1;
-				else
-					num = (num << 1) + 1;
-			return pos ? num : -num;
-		}
-		static void Main(string[] args) {
-			Console.WriteLine("Whitespace.NET DeWhiteSpace v.0.1\nAntonio Cisternino (C)2003\n\n");
-			if (args.Length != 1) {
-				Console.WriteLine("Usage: dews FileIn");
-				return;
-			}
-			FileStream src = new FileStream(args[0], FileMode.Open, FileAccess.Read);
-			Tokenizer tok = new Tokenizer(new BinaryReader(src));
-			Parser p = new Parser(tok);
+                        for (var i = 1; i < literal.Length; i++)
+                                number = (number << 1) + (literal[i] == ' ' ? 0 : 1);
 
-			WSProgram prg = new WSProgram();
-			p.Parse(prg);
+                        return positive ? number : -number;
+                }
+                static void Main(string[] args) {
+                        Console.WriteLine("Whitespace.NET DeWhiteSpace v.0.1\nAntonio Cisternino (C)2003\n\n");
+                        if (args.Length != 1) {
+                                Console.WriteLine("Usage: dews FileIn");
+                                return;
+                        }
+                        using var src = new FileStream(args[0], FileMode.Open, FileAccess.Read);
+                        var tok = new Tokenizer(new BinaryReader(src));
+                        var p = new Parser(tok);
 
-			for (int i = 0; i < prg.Instructions.Count; i++) {
-				Instruction instr = prg.Instructions[i] as Instruction;
-				string par = "";
+                        var prg = new WSProgram();
+                        p.Parse(prg);
 
-				if (instr.param != null) {
-					if ((int)instr.op >= (int)Instruction.OpCode.mrk && (int)instr.op <= (int)instr.op)
-						par = instr.param.Replace(' ', 's').Replace('\x09', 't');
-					else
-						par = ParseNumber(instr.param).ToString();
-				}
-				Console.WriteLine("{0} {1}", instr.op.ToString(), par);
-			}
-		}
-	}
+                        for (var i = 0; i < prg.Instructions.Count; i++) {
+                                var instr = prg.Instructions[i];
+                                var par = string.Empty;
+
+                                if (instr.Parameter != null) {
+                                        if (instr.Operation is >= Instruction.OpCode.mrk and <= Instruction.OpCode.jlz)
+                                                par = instr.Parameter.Replace(' ', 's').Replace('\x09', 't');
+                                        else
+                                                par = ParseNumber(instr.Parameter).ToString();
+                                }
+                                Console.WriteLine("{0} {1}", instr.Operation, par);
+                        }
+                }
+        }
 }
