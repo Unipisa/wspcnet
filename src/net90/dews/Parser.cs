@@ -1,6 +1,7 @@
 using System;
-using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace Whitespace.net {
 	/// <summary>
@@ -42,291 +43,306 @@ namespace Whitespace.net {
 	/// [Tab][Tab]			-						Read a number and place it in the location given by the top of the stack 
 	/// </summary>
 
-	internal class Instruction {
-		public enum OpCode {
-			push,
-			dup,
-			swap,
-			pop,
-			add,
-			sub,
-			mul,
-			div,
-			mod,
-			sth,
-			ldh,
-			mrk,
-			call,
-			jmp,
-			jz,
-			jlz,
-			ret,
-			end,
-			wrc,
-			wri,
-			rdc,
-			rdi
-		}
-		public int tgt;
-		public string param;
-		public OpCode op;
+        internal sealed class Instruction {
+                public enum OpCode {
+                        push,
+                        dup,
+                        swap,
+                        pop,
+                        add,
+                        sub,
+                        mul,
+                        div,
+                        mod,
+                        sth,
+                        ldh,
+                        mrk,
+                        call,
+                        jmp,
+                        jz,
+                        jlz,
+                        ret,
+                        end,
+                        wrc,
+                        wri,
+                        rdc,
+                        rdi
+                }
 
-		public Instruction(OpCode o, string p) {
-			op = o;
-			param = p;
-			tgt = -1;
-		}
-		public Instruction(OpCode o) {
-			op = o;
-			param = null;
-			tgt = -1;
-		}
-		public Instruction(OpCode o, int t) {
-			op = o;
-			param = null;
-			tgt = t;
-		}
-	}
+                public Instruction(OpCode operation, string? parameter) {
+                        Operation = operation;
+                        Parameter = parameter;
+                }
 
-	internal class WSProgram {
-		public ArrayList Instructions;
-		public Hashtable Targets;
+                public Instruction(OpCode operation) {
+                        Operation = operation;
+                }
 
-		public WSProgram() {
-			Instructions = new ArrayList();
-			Targets = new Hashtable();
-		}
-	}
+                public Instruction(OpCode operation, int target) {
+                        Operation = operation;
+                        Target = target;
+                }
 
-	class Tokenizer {
-		public enum Token {
-			SPACE = 0x20,
-			TAB = 0x09,
-			LF = 0x0A,
-			EOF = 0
-		}
-		BinaryReader inp;
-		public int Line;
+                public OpCode Operation { get; }
 
-		public Tokenizer(BinaryReader s) {
-			inp = s;
-			Line = 1;
-		}
+                public string? Parameter { get; }
 
-		public Token Next() {
-			while (inp.BaseStream.Position < inp.BaseStream.Length) {
-				int c = inp.Read();
-				switch ((Token)c) {
-					case Token.SPACE:
-					case Token.TAB:
-						return (Token)c;
-					case Token.LF:
-						Line++;
-						return Token.LF;
-					default:
-						continue;
-				}
-			}
-			return Token.EOF;
-		}
-	}
+                public int Target { get; set; } = -1;
+        }
 
-	class Parser {
-		private Tokenizer tok;
-		
-		public Parser(Tokenizer t) {
-			tok = t;
-		}
+        internal sealed class WSProgram {
+                public List<Instruction> Instructions { get; } = new();
 
-		private string ParseLiteral() {
-			System.Text.StringBuilder sb = new System.Text.StringBuilder();
-			Tokenizer.Token t;
-			while ((t = tok.Next()) != Tokenizer.Token.LF) {
-				if (t == Tokenizer.Token.EOF)
-					throw new Exception(string.Format("Unexpected EOF at line: {0}", tok.Line));
-				sb.Append(t == Tokenizer.Token.SPACE ? ' ' : '\t');
-			}
-			return sb.ToString();
-		}
+                public Dictionary<string, int> Targets { get; } = new();
+        }
 
-		private void ParseStack(WSProgram p) {
-			switch (tok.Next()) {
-				case Tokenizer.Token.SPACE:
-					p.Instructions.Add(new Instruction(Instruction.OpCode.push, ParseLiteral()));
-					break;
-				case Tokenizer.Token.LF:
-				switch (tok.Next()) {
-					case Tokenizer.Token.SPACE:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.dup));
-						break;
-					case Tokenizer.Token.TAB:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.swap));
-						break;
-					case Tokenizer.Token.LF:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.pop));
-						break;
-					default:
-						throw new Exception(string.Format("Whitespace.NET ({0}): Unexpected end of file!", tok.Line));
-				}
-					break;
-				default:
-					throw new Exception(string.Format("Whitespace.NET ({0}): Wrong stack operation!", tok.Line));
-			}
-		}
+        sealed class Tokenizer {
+                public enum Token {
+                        SPACE = 0x20,
+                        TAB = 0x09,
+                        LF = 0x0A,
+                        EOF = 0
+                }
+                private readonly BinaryReader input;
 
-		private void ParseControlFlow(WSProgram p) {
-			string l;
-			switch (tok.Next()) {
-				case Tokenizer.Token.SPACE:
-				switch (tok.Next()) {
-					case Tokenizer.Token.SPACE:
-						l = ParseLiteral();
-						p.Targets[l] = p.Instructions.Count;
-						p.Instructions.Add(new Instruction(Instruction.OpCode.mrk, l));
-						break;
-					case Tokenizer.Token.TAB:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.call, ParseLiteral()));
-						break;
-					case Tokenizer.Token.LF:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.jmp, ParseLiteral()));
-						break;
-					default:
-						throw new Exception(string.Format("Whitespace.NET ({0}): Unexpected end of file!", tok.Line));
-				}
-					break;
-				case Tokenizer.Token.TAB:
-				switch (tok.Next()) {
-					case Tokenizer.Token.SPACE:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.jz, ParseLiteral()));
-						break;
-					case Tokenizer.Token.TAB:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.jlz, ParseLiteral()));
-						break;
-					case Tokenizer.Token.LF:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.ret));
-						break;
-					default:
-						throw new Exception(string.Format("Whitespace.NET ({0}): Unexpected end of file!", tok.Line));
-				}
-					break;
-				case Tokenizer.Token.LF:
-					if (tok.Next() == Tokenizer.Token.LF) 
-						p.Instructions.Add(new Instruction(Instruction.OpCode.end));
-					else
-						throw new Exception(string.Format("Whitespace.NET ({0}): Wrong control flow operation!", tok.Line));
-					break;
-				default:
-					throw new Exception(string.Format("Whitespace.NET ({0}): Unexpected end of file!", tok.Line));
-			}
-		}
+                public int Line { get; private set; }
 
-		private void ParseArithmetic(WSProgram p) {
-			switch (tok.Next()) {
-				case Tokenizer.Token.SPACE:
-				switch (tok.Next()) {
-					case Tokenizer.Token.SPACE:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.add));
-						break;
-					case Tokenizer.Token.TAB:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.sub));
-						break;
-					case Tokenizer.Token.LF:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.mul));
-						break;
-					default:
-						throw new Exception(string.Format("Whitespace.NET ({0}): Unexpected end of file!", tok.Line));
-				}
-					break;
-				case Tokenizer.Token.TAB:
-				switch (tok.Next()) {
-					case Tokenizer.Token.SPACE:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.div));
-						break;
-					case Tokenizer.Token.TAB:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.mod));
-						break;
-					default:
-						throw new Exception(string.Format("Whitespace.NET ({0}): Unknown arithmetic operation!", tok.Line));
-				}
-					break;
-				default:
-					throw new Exception(string.Format("Whitespace.NET ({0}): Wrong arithmetic operation!", tok.Line));
-			}
-		}
-	
-		private void ParseHeap(WSProgram p) {
-			switch (tok.Next()) {
-				case Tokenizer.Token.SPACE:
-					p.Instructions.Add(new Instruction(Instruction.OpCode.sth));
-					break;
-				case Tokenizer.Token.TAB:
-					p.Instructions.Add(new Instruction(Instruction.OpCode.ldh));
-					break;
-				default:
-					throw new Exception(string.Format("Whitespace.NET ({0}): Wrong heap operation!", tok.Line));
-			}
-		}
+                public Tokenizer(BinaryReader reader) {
+                        input = reader;
+                        Line = 1;
+                }
 
-		private void ParseIO(WSProgram p) {
-			switch (tok.Next()) {
-				case Tokenizer.Token.SPACE:
-				switch (tok.Next()) {
-					case Tokenizer.Token.SPACE:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.wrc));
-						break;
-					case Tokenizer.Token.TAB:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.wri));
-						break;
-					default:
-						throw new Exception(string.Format("Whitespace.NET ({0}): Wrong I/O operation!", tok.Line));
-				}
-					break;
-				case Tokenizer.Token.TAB:
-				switch (tok.Next()) {
-					case Tokenizer.Token.SPACE:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.rdc));
-						break;
-					case Tokenizer.Token.TAB:
-						p.Instructions.Add(new Instruction(Instruction.OpCode.rdi));
-						break;
-					default:
-						throw new Exception(string.Format("Whitespace.NET ({0}): Wrong I/O operation!", tok.Line));
-				}
-					break;
-				default:
-					throw new Exception(string.Format("Whitespace.NET ({0}): Wrong I/O operation!", tok.Line));
-			}
-		}
+                public Token Next() {
+                        while (input.BaseStream.Position < input.BaseStream.Length) {
+                                var value = input.Read();
+                                switch ((Token)value) {
+                                        case Token.SPACE:
+                                        case Token.TAB:
+                                                return (Token)value;
+                                        case Token.LF:
+                                                Line++;
+                                                return Token.LF;
+                                }
+                        }
 
-		public void Parse(WSProgram p) {
-			for(;;) {
-				switch (tok.Next()) {
-					case Tokenizer.Token.SPACE:
-						ParseStack(p);
-						break;
-					case Tokenizer.Token.LF:
-						ParseControlFlow(p);
-						break;
-					case Tokenizer.Token.TAB:
-					switch (tok.Next()) {
-						case Tokenizer.Token.SPACE:
-							ParseArithmetic(p);
-							break;
-						case Tokenizer.Token.TAB:
-							ParseHeap(p);
-							break;
-						case Tokenizer.Token.LF:
-							ParseIO(p);
-							break;
-						default:
-							throw new Exception(string.Format("Unexpected EOF at line: {0}", tok.Line));
-					}
-						break;
-					default:
-						return;
-				}
-			}
-		}
-	}
+                        return Token.EOF;
+                }
+        }
+
+        sealed class Parser {
+                private readonly Tokenizer tokenizer;
+
+                public Parser(Tokenizer tokenizer) {
+                        this.tokenizer = tokenizer;
+                }
+
+                private InvalidDataException UnexpectedEof() => new($"Unexpected EOF at line: {tokenizer.Line}");
+
+                private InvalidDataException ParserError(string message) => new($"Whitespace.NET ({tokenizer.Line}): {message}");
+
+                private string ParseLiteral() {
+                        var sb = new StringBuilder();
+                        Tokenizer.Token token;
+                        while ((token = tokenizer.Next()) != Tokenizer.Token.LF) {
+                                if (token == Tokenizer.Token.EOF) {
+                                        throw UnexpectedEof();
+                                }
+
+                                sb.Append(token == Tokenizer.Token.SPACE ? ' ' : '\t');
+                        }
+
+                        return sb.ToString();
+                }
+
+                private void ParseStack(WSProgram program) {
+                        switch (tokenizer.Next()) {
+                                case Tokenizer.Token.SPACE:
+                                        program.Instructions.Add(new Instruction(Instruction.OpCode.push, ParseLiteral()));
+                                        break;
+                                case Tokenizer.Token.LF:
+                                        switch (tokenizer.Next()) {
+                                                case Tokenizer.Token.SPACE:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.dup));
+                                                        break;
+                                                case Tokenizer.Token.TAB:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.swap));
+                                                        break;
+                                                case Tokenizer.Token.LF:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.pop));
+                                                        break;
+                                                default:
+                                                        throw ParserError("Unexpected end of file!");
+                                        }
+
+                                        break;
+                                default:
+                                        throw ParserError("Wrong stack operation!");
+                        }
+                }
+
+                private void ParseControlFlow(WSProgram program) {
+                        switch (tokenizer.Next()) {
+                                case Tokenizer.Token.SPACE:
+                                        switch (tokenizer.Next()) {
+                                                case Tokenizer.Token.SPACE: {
+                                                        var label = ParseLiteral();
+                                                        program.Targets[label] = program.Instructions.Count;
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.mrk, label));
+                                                        break;
+                                                }
+                                                case Tokenizer.Token.TAB:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.call, ParseLiteral()));
+                                                        break;
+                                                case Tokenizer.Token.LF:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.jmp, ParseLiteral()));
+                                                        break;
+                                                default:
+                                                        throw ParserError("Unexpected end of file!");
+                                        }
+
+                                        break;
+                                case Tokenizer.Token.TAB:
+                                        switch (tokenizer.Next()) {
+                                                case Tokenizer.Token.SPACE:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.jz, ParseLiteral()));
+                                                        break;
+                                                case Tokenizer.Token.TAB:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.jlz, ParseLiteral()));
+                                                        break;
+                                                case Tokenizer.Token.LF:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.ret));
+                                                        break;
+                                                default:
+                                                        throw ParserError("Unexpected end of file!");
+                                        }
+
+                                        break;
+                                case Tokenizer.Token.LF:
+                                        if (tokenizer.Next() == Tokenizer.Token.LF) {
+                                                program.Instructions.Add(new Instruction(Instruction.OpCode.end));
+                                        }
+                                        else {
+                                                throw ParserError("Wrong control flow operation!");
+                                        }
+
+                                        break;
+                                default:
+                                        throw ParserError("Unexpected end of file!");
+                        }
+                }
+
+                private void ParseArithmetic(WSProgram program) {
+                        switch (tokenizer.Next()) {
+                                case Tokenizer.Token.SPACE:
+                                        switch (tokenizer.Next()) {
+                                                case Tokenizer.Token.SPACE:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.add));
+                                                        break;
+                                                case Tokenizer.Token.TAB:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.sub));
+                                                        break;
+                                                case Tokenizer.Token.LF:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.mul));
+                                                        break;
+                                                default:
+                                                        throw ParserError("Unexpected end of file!");
+                                        }
+
+                                        break;
+                                case Tokenizer.Token.TAB:
+                                        switch (tokenizer.Next()) {
+                                                case Tokenizer.Token.SPACE:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.div));
+                                                        break;
+                                                case Tokenizer.Token.TAB:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.mod));
+                                                        break;
+                                                default:
+                                                        throw ParserError("Unknown arithmetic operation!");
+                                        }
+
+                                        break;
+                                default:
+                                        throw ParserError("Wrong arithmetic operation!");
+                        }
+                }
+
+                private void ParseHeap(WSProgram program) {
+                        switch (tokenizer.Next()) {
+                                case Tokenizer.Token.SPACE:
+                                        program.Instructions.Add(new Instruction(Instruction.OpCode.sth));
+                                        break;
+                                case Tokenizer.Token.TAB:
+                                        program.Instructions.Add(new Instruction(Instruction.OpCode.ldh));
+                                        break;
+                                default:
+                                        throw ParserError("Wrong heap operation!");
+                        }
+                }
+
+                private void ParseIo(WSProgram program) {
+                        switch (tokenizer.Next()) {
+                                case Tokenizer.Token.SPACE:
+                                        switch (tokenizer.Next()) {
+                                                case Tokenizer.Token.SPACE:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.wrc));
+                                                        break;
+                                                case Tokenizer.Token.TAB:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.wri));
+                                                        break;
+                                                default:
+                                                        throw ParserError("Wrong I/O operation!");
+                                        }
+
+                                        break;
+                                case Tokenizer.Token.TAB:
+                                        switch (tokenizer.Next()) {
+                                                case Tokenizer.Token.SPACE:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.rdc));
+                                                        break;
+                                                case Tokenizer.Token.TAB:
+                                                        program.Instructions.Add(new Instruction(Instruction.OpCode.rdi));
+                                                        break;
+                                                default:
+                                                        throw ParserError("Wrong I/O operation!");
+                                        }
+
+                                        break;
+                                default:
+                                        throw ParserError("Wrong I/O operation!");
+                        }
+                }
+
+                public void Parse(WSProgram program) {
+                        while (true) {
+                                switch (tokenizer.Next()) {
+                                        case Tokenizer.Token.SPACE:
+                                                ParseStack(program);
+                                                break;
+                                        case Tokenizer.Token.LF:
+                                                ParseControlFlow(program);
+                                                break;
+                                        case Tokenizer.Token.TAB:
+                                                switch (tokenizer.Next()) {
+                                                        case Tokenizer.Token.SPACE:
+                                                                ParseArithmetic(program);
+                                                                break;
+                                                        case Tokenizer.Token.TAB:
+                                                                ParseHeap(program);
+                                                                break;
+                                                        case Tokenizer.Token.LF:
+                                                                ParseIo(program);
+                                                                break;
+                                                        default:
+                                                                throw UnexpectedEof();
+                                                }
+
+                                                break;
+                                        default:
+                                                return;
+                                }
+                        }
+                }
+        }
 
 }
