@@ -1,0 +1,81 @@
+BODY {
+	BACKGROUND: #f0f0f0; COLOR: #000000; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+SPAN {
+	BACKGROUND: #f0f0f0; COLOR: #000000; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+A {
+	COLOR: #e00000; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+A:visited {
+	COLOR: #ff4040; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+UL {
+	BACKGROUND: #fff0f0; COLOR: #000020; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+OL {
+	BACKGROUND: #fff0f0; COLOR: #000020; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+DL {
+	BACKGROUND: #fff0f0; COLOR: #000020; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+DT {
+	BACKGROUND: #fff0f0; COLOR: #000020; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+DD {
+	BACKGROUND: #fff0f0; COLOR: #000020; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+P {
+	COLOR: #200000; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+H1 {
+	FONT-WEIGHT: bold; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+	Syntax, sans-serif
+}
+TH {
+	BACKGROUND: #c02020; COLOR: #fffff0; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+TD {
+	BACKGROUND: #f0f0f0; VERTICAL-ALIGN: top; COLOR: #200000; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+.layout {
+	BACKGROUND: #f0a0a0; COLOR: #fffff0
+}
+.main {
+	BACKGROUND: #fff0f0; COLOR: #200000
+}
+.break {
+	BACKGROUND: #fffff0
+}
+TABLE {
+	COLOR: #000000
+}
+H2 {
+	BACKGROUND: #fff0f0; COLOR: #800000; FONT-FAMILY: Verdana, Tahoma, "Myriad Web", Syntax, sans-serif
+}
+H3 {
+	BACKGROUND: #fff0f0; COLOR: #800000; FONT-FAMILY: Verdana, Tahoma, "Myriad Web", Syntax, sans-serif
+}
+ADDRESS {
+	FONT-SIZE: 80%; COLOR: #f5f5f5; FONT-FAMILY: Verdana, Tahoma, "Myriad Web",
+        Syntax, sans-serif
+}
+PRE {
+	FONT-FAMILY: 'Andale Mono', 'Monotype.com', "Courier New", 
+        monospace
+}
+HR {
+	COLOR: #30e030
+}

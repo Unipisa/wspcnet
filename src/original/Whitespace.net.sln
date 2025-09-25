@@ -1,0 +1,29 @@
+Microsoft Visual Studio Solution File, Format Version 8.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Whitespace.net", "Whitespace.net\Whitespace.net.csproj", "{5320DABA-BC72-4F54-A8C9-7BE3AFBD5B66}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "dews", "dews\dews.csproj", "{E04E62B6-5E10-4916-8C41-D7AE68EC481D}"
+	ProjectSection(ProjectDependencies) = postProject
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfiguration) = preSolution
+		Debug = Debug
+		Release = Release
+	EndGlobalSection
+	GlobalSection(ProjectConfiguration) = postSolution
+		{5320DABA-BC72-4F54-A8C9-7BE3AFBD5B66}.Debug.ActiveCfg = Debug|.NET
+		{5320DABA-BC72-4F54-A8C9-7BE3AFBD5B66}.Debug.Build.0 = Debug|.NET
+		{5320DABA-BC72-4F54-A8C9-7BE3AFBD5B66}.Release.ActiveCfg = Release|.NET
+		{5320DABA-BC72-4F54-A8C9-7BE3AFBD5B66}.Release.Build.0 = Release|.NET
+		{E04E62B6-5E10-4916-8C41-D7AE68EC481D}.Debug.ActiveCfg = Debug|.NET
+		{E04E62B6-5E10-4916-8C41-D7AE68EC481D}.Debug.Build.0 = Debug|.NET
+		{E04E62B6-5E10-4916-8C41-D7AE68EC481D}.Release.ActiveCfg = Release|.NET
+		{E04E62B6-5E10-4916-8C41-D7AE68EC481D}.Release.Build.0 = Release|.NET
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+	EndGlobalSection
+	GlobalSection(ExtensibilityAddIns) = postSolution
+	EndGlobalSection
+EndGlobal
